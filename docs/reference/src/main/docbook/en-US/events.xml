@@ -321,7 +321,7 @@ if (document.isBlog()) blogEvent.select(new AnnotationLiteral<Updated>(){}).fire
   
       <para>Imagine that we have cached a JPA query result set in the application scope:</para>
   
-  <programlisting role="JAVA"><![CDATA[import javax.inject.Singleton;
+  <programlisting role="JAVA"><![CDATA[import javax.ejb.Singleton;
 import javax.enterprise.inject.Produces;
 
 @ApplicationScoped @Singleton
@@ -375,7 +375,7 @@ public class ProductManager {
          And now <literal>Catalog</literal> can observe the events after successful completion of the transaction:
       </para>
   
-  <programlisting role="JAVA"><![CDATA[import javax.inject.Singleton;
+  <programlisting role="JAVA"><![CDATA[import javax.ejb.Singleton;
 
 @ApplicationScoped @Singleton
 public class Catalog {
