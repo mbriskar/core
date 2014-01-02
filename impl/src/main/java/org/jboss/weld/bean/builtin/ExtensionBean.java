@@ -58,9 +58,11 @@ public class ExtensionBean extends AbstractBuiltInBean<Extension> {
     private void check(EnhancedAnnotatedType<Extension> clazz) {
         for (AnnotatedField<?> field : clazz.getFields()) {
             Member member = field.getJavaMember();
+            String memberString = member.toString();
+            String clazzString = clazz.getBaseType().toString();
             if (Modifier.isPublic(member.getModifiers()) && !Modifier.isStatic(member.getModifiers())) {
                 // warn when an extension has a non-static public field
-                BeanLogger.LOG.extensionWithNonStaticPublicField(clazz.getBaseType(), field.getJavaMember());
+                BeanLogger.LOG.extensionWithNonStaticPublicField(clazz.getBaseType(), member);
             }
         }
     }
