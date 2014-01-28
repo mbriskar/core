@@ -20,6 +20,8 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.jboss.jandex.Index;
+
 import org.jboss.logging.Logger;
 import org.jboss.weld.bootstrap.api.Bootstrap;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
@@ -47,6 +49,7 @@ public class URLScanner {
     private final String[] resources;
     private final ResourceLoader resourceLoader;
     private final Bootstrap bootstrap;
+    public static Index index;
 
     public URLScanner(ResourceLoader resourceLoader, Bootstrap bootstrap, String... resources) {
         this.resources = resources;
@@ -66,6 +69,7 @@ public class URLScanner {
                 }
             }
         }
+        index = handler.buildIndex();
         return new ImmutableBeanDeploymentArchive("classpath", handler.getDiscoveredClasses(), bootstrap.parse(handler.getDiscoveredBeansXmlUrls(), true));
     }
 

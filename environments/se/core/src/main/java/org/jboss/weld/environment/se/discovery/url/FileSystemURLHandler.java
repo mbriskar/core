@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import org.jboss.logging.Logger;
+import org.jboss.jandex.Indexer;
+import org.jboss.jandex.Index;
 
 /**
  * This class provides file-system orientated scanning
@@ -47,11 +50,11 @@ public class FileSystemURLHandler {
 
     private List<String> discoveredClasses = new ArrayList<String>();
     private List<URL> discoveredBeansXmlUrls = new ArrayList<URL>();
+    private Indexer indexer = new Indexer();
 
     public void handle(String urlPath) {
         try {
             log.tracev("scanning: {0}", urlPath);
-
             // WebStart support: get path to local cached copy of remote JAR file
             if (urlPath.startsWith("http:") || urlPath.startsWith("https:")) {
                 // Class loader should be an instance of com.sun.jnlp.JNLPClassLoader
@@ -74,7 +77,6 @@ public class FileSystemURLHandler {
                     log.warn("could not invoke JNLPClassLoader#getJarFile(URL) on context class loader", iacce);
                 }
             }
-
             File file = new File(urlPath);
             if (file.isDirectory()) {
                 handleDirectory(file, null);
@@ -89,7 +91,6 @@ public class FileSystemURLHandler {
     private void handleArchiveByFile(File file) throws IOException {
         try {
             log.tracev("archive: {0}", file);
-
             String archiveUrl = "jar:" + file.toURI().toURL().toExternalForm() + "!/";
             ZipFile zip = new ZipFile(file);
             Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -105,9 +106,32 @@ public class FileSystemURLHandler {
         }
     }
 
+    private void addToIndex(URL url) {
+        InputStream fs = null;
+        try {
+            fs = url.openStream();
+            indexer.index(fs);
+        } catch (IOException ex) {
+
+        } finally {
+            try {
+                if (fs != null) {
+                    fs.close();
+                }
+            } catch (IOException ex) {
+
+            }
+
+        }
+
+    }
+
+    public Index buildIndex() {
+        return indexer.complete();
+    }
+
     private void handleDirectory(File dir, String path) {
         log.tracev("handling directory: {0}", dir);
-
         File[] files = dir.listFiles();
         assert files != null;
         for (File child : files) {
@@ -128,6 +152,7 @@ public class FileSystemURLHandler {
     protected void addToDiscovered(String name, URL url) {
         if (name.endsWith(CLASS_FILE_EXTENSION)) {
             discoveredClasses.add(filenameToClassname(name));
+            addToIndex(url);
         } else if (name.endsWith(BEANS_XML)) {
             discoveredBeansXmlUrls.add(url);
         }

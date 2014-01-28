@@ -27,6 +27,7 @@ import javax.enterprise.inject.UnsatisfiedResolutionException;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
+import org.jboss.weld.environment.se.discovery.url.URLScanner;
 
 import org.jboss.weld.bootstrap.api.Bootstrap;
 import org.jboss.weld.bootstrap.api.Environments;
@@ -34,11 +35,13 @@ import org.jboss.weld.bootstrap.api.helpers.ForwardingBootstrap;
 import org.jboss.weld.bootstrap.spi.BeansXml;
 import org.jboss.weld.bootstrap.spi.Deployment;
 import org.jboss.weld.bootstrap.spi.Metadata;
+import org.jboss.weld.environment.se.discovery.WeldSEClassFileServices;
 import org.jboss.weld.environment.se.discovery.url.WeldSEResourceLoader;
 import org.jboss.weld.environment.se.discovery.url.WeldSEUrlDeployment;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.jboss.weld.metadata.MetadataImpl;
 import org.jboss.weld.resources.spi.ResourceLoader;
+import org.jboss.weld.resources.spi.ClassFileServices;
 
 /**
  * <p>
@@ -135,9 +138,10 @@ public class Weld {
         };
 
         Deployment deployment = createDeployment(resourceLoader, bootstrap);
+
+        deployment.getServices().add(ClassFileServices.class, new WeldSEClassFileServices(URLScanner.index));
         // Set up the container
         bootstrap.startContainer(Environments.SE, deployment);
-
         // Start the container
         bootstrap.startInitialization();
         bootstrap.deployBeans();
