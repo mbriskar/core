@@ -268,6 +268,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
             if (superClassInfo == null) {
                 // we are accessing a class that is outside of the jandex index
                 // fallback to using reflection
+                System.err.println("Class is outside of the jandex index. Class name:" + superName.toString());
                 return SEReflections.containsAnnotation(loadClass(superName.toString()), requiredAnnotation);
             }
             if (containsAnnotation(superClassInfo, requiredAnnotationName, requiredAnnotation)) {
@@ -281,6 +282,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
         // TODO: log a trace message for debugging
         Class<?> clazz = null;
         try {
+            System.err.println("LoadClass from ClassFileInfo called. Class name: " + className.toString());
             clazz = classLoader.loadClass(className);
         } catch (ClassNotFoundException ex) {
 
