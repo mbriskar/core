@@ -55,6 +55,7 @@ public class URLScanner {
     }
 
     public BeanDeploymentArchive scan() {
+        long startTime = System.currentTimeMillis();
         FileSystemURLHandler handler = new FileSystemURLHandler();
         for (String resourceName : resources) {
             // grab all the URLs for this resource
@@ -66,6 +67,8 @@ public class URLScanner {
                 }
             }
         }
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        System.err.println("Scan took " + estimatedTime + "ms");
         return new ImmutableBeanDeploymentArchive("classpath", handler.getDiscoveredClasses(), bootstrap.parse(handler.getDiscoveredBeansXmlUrls(), true));
     }
 
