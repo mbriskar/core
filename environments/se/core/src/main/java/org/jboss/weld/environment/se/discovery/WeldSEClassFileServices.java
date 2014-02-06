@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import org.jboss.weld.resources.spi.ClassFileInfo;
 import org.jboss.weld.resources.spi.ClassFileServices;
 
-import org.jboss.jandex.Index;
+import org.jboss.jandex.IndexView;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 
@@ -37,14 +37,14 @@ import org.jboss.jandex.DotName;
  */
 public class WeldSEClassFileServices implements ClassFileServices {
 
-    private Index index;
+    private IndexView indexView;
     private LoadingCache<DotName, Set<String>> annotationClassAnnotationsCache;
     private final ClassLoader classLoader;
 
     private class AnnotationClassAnnotationLoader extends CacheLoader<DotName, Set<String>> {
         @Override
         public Set<String> load(DotName name) throws Exception {
-            ClassInfo annotationClassInfo = index.getClassByName(name);
+            ClassInfo annotationClassInfo = indexView.getClassByName(name);
             ImmutableSet.Builder<String> builder = ImmutableSet.builder();
             if (annotationClassInfo != null) {
                 for (DotName annotationName : annotationClassInfo.annotations().keySet()) {
@@ -68,18 +68,18 @@ public class WeldSEClassFileServices implements ClassFileServices {
      *
      * @param index
      */
-    public WeldSEClassFileServices(Index index) {
-        if (index == null) {
+    public WeldSEClassFileServices(IndexView indexView) {
+        if (indexView == null) {
             // TODO: throw WeldMessages.MESSAGES.cannotUseAtRuntime(ClassFileServices.class.getSimpleName());
         }
         this.classLoader = this.getClass().getClassLoader();
-        this.index = index;
+        this.indexView = indexView;
         this.annotationClassAnnotationsCache = CacheBuilder.newBuilder().build(new AnnotationClassAnnotationLoader());
     }
 
     @Override
     public ClassFileInfo getClassFileInfo(String className) {
-        return new WeldSEClassFileInfo(className, index, annotationClassAnnotationsCache, classLoader);
+        return new WeldSEClassFileInfo(className, indexView, annotationClassAnnotationsCache, classLoader);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class WeldSEClassFileServices implements ClassFileServices {
             annotationClassAnnotationsCache.invalidateAll();
             annotationClassAnnotationsCache = null;
         }
-        index = null;
+        indexView = null;
     }
 
     @Override

@@ -14,7 +14,7 @@ import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
-import org.jboss.jandex.Index;
+import org.jboss.jandex.IndexView;
 import org.jboss.weld.resources.spi.ClassFileInfo;
 import org.jboss.weld.resources.spi.ClassFileInfoException;
 import org.jboss.weld.environment.se.util.SEReflections;
@@ -42,7 +42,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
 
     private final ClassInfo classInfo;
 
-    private final Index index;
+    private final IndexView indexView;
 
     private final boolean isVetoed;
 
@@ -55,13 +55,14 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
     /**
      *
      * @param className
-     * @param index
+     * @param indexView
      * @param annotationClassAnnotationsCache
      */
-    public WeldSEClassFileInfo(String className, Index index, LoadingCache<DotName, Set<String>> annotationClassAnnotationsCache, ClassLoader classLoader) {
-        this.index = index;
+    public WeldSEClassFileInfo(String className, IndexView indexView, LoadingCache<DotName, Set<String>> annotationClassAnnotationsCache,
+            ClassLoader classLoader) {
+        this.indexView = indexView;
         this.annotationClassAnnotationsCache = annotationClassAnnotationsCache;
-        this.classInfo = index.getClassByName(DotName.createSimple(className));
+        this.classInfo = indexView.getClassByName(DotName.createSimple(className));
         if (this.classInfo == null) {
             throw new IllegalStateException(("Index for name:" + className + "not found"));
         }
@@ -128,7 +129,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
             return true;
         }
 
-        ClassInfo packageInfo = index.getClassByName(DotName.createSimple(getPackageName(classInfo.name()) + DOT_SEPARATOR + PACKAGE_INFO_NAME));
+        ClassInfo packageInfo = indexView.getClassByName(DotName.createSimple(getPackageName(classInfo.name()) + DOT_SEPARATOR + PACKAGE_INFO_NAME));
 
         if (packageInfo != null && isAnnotationDeclared(packageInfo, DOT_NAME_VETOED)) {
             return true;
@@ -222,7 +223,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
             return false; // there's nothing assignable from Object.class except for Object.class
         }
 
-        ClassInfo fromClassInfo = index.getClassByName(name);
+        ClassInfo fromClassInfo = indexView.getClassByName(name);
         if (fromClassInfo == null) {
             // We reached a class that is not in the index. Let's use reflection.
             final Class<?> clazz = loadClass(name.toString());
@@ -264,7 +265,7 @@ public class WeldSEClassFileInfo implements ClassFileInfo {
         final DotName superName = classInfo.superName();
 
         if (superName != null && !OBJECT_NAME.equals(superName)) {
-            final ClassInfo superClassInfo = index.getClassByName(superName);
+            final ClassInfo superClassInfo = indexView.getClassByName(superName);
             if (superClassInfo == null) {
                 // we are accessing a class that is outside of the jandex index
                 // fallback to using reflection

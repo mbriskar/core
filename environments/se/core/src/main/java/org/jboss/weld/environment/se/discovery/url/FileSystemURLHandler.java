@@ -26,13 +26,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import org.jboss.logging.Logger;
 import org.jboss.jandex.Indexer;
-import org.jboss.jandex.Index;
+import org.jboss.jandex.IndexView;
 
 /**
  * This class provides file-system orientated scanning
@@ -42,6 +45,7 @@ import org.jboss.jandex.Index;
  */
 public class FileSystemURLHandler {
 
+    private static final int timeToWaitForThreads = 50;
     private static final Logger log = Logger.getLogger(FileSystemURLHandler.class);
     private static final String UNEXPECTED_CLASSLOADER_MESSAGE = "could not invoke JNLPClassLoader#getJarFile(URL) on context class loader, expecting Web Start class loader";
 
@@ -51,8 +55,16 @@ public class FileSystemURLHandler {
     private List<String> discoveredClasses = new ArrayList<String>();
     private List<URL> discoveredBeansXmlUrls = new ArrayList<URL>();
     private Indexer indexer = new Indexer();
+    IndexingThreadFactory threadFactory;
+    ExecutorService executor;
+
+    public FileSystemURLHandler() {
+        threadFactory = new IndexingThreadFactory();
+        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1, threadFactory);
+    }
 
     public void handle(String urlPath) {
+
         try {
             log.tracev("scanning: {0}", urlPath);
             // WebStart support: get path to local cached copy of remote JAR file
@@ -106,28 +118,38 @@ public class FileSystemURLHandler {
         }
     }
 
-    private void addToIndex(URL url) {
-        InputStream fs = null;
-        try {
-            fs = url.openStream();
-            indexer.index(fs);
-        } catch (IOException ex) {
+    private void addToIndex(final URL url) {
+            executor.execute(new Runnable() {
+                public void run() {
+                InputStream fs = null;
+                    try {
+                        fs = url.openStream();
+                        IndexingThread indexThread = (IndexingThread) Thread.currentThread();
+                        Indexer indexer = indexThread.getIndexer();
+                        indexer.index(fs);
+                    } catch (IOException ex) {
+                } finally {
+                    try {
+                        if (fs != null) {
+                            fs.close();
+                        }
+                    } catch (IOException ex) {
 
-        } finally {
-            try {
-                if (fs != null) {
-                    fs.close();
+                    }
+
+                    }
                 }
-            } catch (IOException ex) {
-
-            }
-
-        }
-
+            });
     }
 
-    public Index buildIndex() {
-        return indexer.complete();
+    public IndexView buildIndex() {
+        executor.shutdown();
+        try {
+            executor.awaitTermination(timeToWaitForThreads, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+
+        }
+        return threadFactory.buildIndex();
     }
 
     private void handleDirectory(File dir, String path) {

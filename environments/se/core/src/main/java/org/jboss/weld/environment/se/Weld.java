@@ -139,7 +139,7 @@ public class Weld {
 
         Deployment deployment = createDeployment(resourceLoader, bootstrap);
 
-        deployment.getServices().add(ClassFileServices.class, new WeldSEClassFileServices(URLScanner.index));
+        deployment.getServices().add(ClassFileServices.class, new WeldSEClassFileServices(URLScanner.indexView));
         // Set up the container
         bootstrap.startContainer(Environments.SE, deployment);
         // Start the container
