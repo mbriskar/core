@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
         <artifactId>weld-core-parent</artifactId>
         <groupId>org.jboss.weld</groupId>
@@ -22,11 +23,12 @@
 
     <properties>
         <surefire.plugin.version>2.10</surefire.plugin.version>
-        <!-- Overriding parent version to pass tests on ipv6.
-             TCK tests still use version 2.4 from parent  -->
+        <!-- Overriding parent version to pass tests on ipv6. TCK tests still 
+            use version 2.4 from parent -->
         <htmlunit.version>2.9</htmlunit.version>
         <!-- allows local IP address to be overridden for ipv6 testing -->
         <node.address>127.0.0.1</node.address>
+        <groovy.version>2.2.1</groovy.version>
     </properties>
 
     <dependencies>
@@ -120,6 +122,12 @@
             <artifactId>weld-core-impl</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>${groovy.version}</version>
+        </dependency>
 
     </dependencies>
 
@@ -128,14 +136,28 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <compilerId>groovy-eclipse-compiler</compilerId>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-compiler</artifactId>
+                        <version>2.6.0-01</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.plugin.version}</version>
                 <configuration>
-                    <!--
-                       Set parallel none to force a more modern JUnitCore
-                       provider that understands Suites,
-                       http://old.nabble.com/Maven-Surefire-and-newer-junit-features-td28539796.html
-                    -->
+                    <!-- Set parallel none to force a more modern JUnitCore 
+                        provider that understands Suites, http://old.nabble.com/Maven-Surefire-and-newer-junit-features-td28539796.html -->
                     <parallel>none</parallel>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                 </configuration>
@@ -145,7 +167,8 @@
 
     <profiles>
 
-        <!-- Default standalone profile using weld-ee-embedded container. Used to run fast embedded tests. -->
+        <!-- Default standalone profile using weld-ee-embedded container. 
+            Used to run fast embedded tests. -->
         <profile>
             <id>default</id>
             <activation>
@@ -181,7 +204,8 @@
             </build>
         </profile>
 
-        <!-- InContainer profile using JBoss AS 7 Managed. Runs the full integration test suite, used by e.g. Hudson. -->
+        <!-- InContainer profile using JBoss AS 7 Managed. Runs the full 
+            integration test suite, used by e.g. Hudson. -->
         <profile>
             <id>incontainer</id>
             <activation>
@@ -200,10 +224,10 @@
                     <artifactId>wildfly-arquillian-container-managed</artifactId>
                     <scope>test</scope>
                     <exclusions>
-                      <exclusion>
-                        <groupId>org.jboss.logmanager</groupId>
-                        <artifactId>log4j-jboss-logmanager</artifactId>
-                      </exclusion>
+                        <exclusion>
+                            <groupId>org.jboss.logmanager</groupId>
+                            <artifactId>log4j-jboss-logmanager</artifactId>
+                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -219,7 +243,7 @@
                         <version>${surefire.plugin.version}</version>
                         <configuration>
                             <systemPropertyVariables>
-                                <!-- jboss.server.config.file.name>standalone-full.xml</jboss.server.config.file.name-->
+                                <!-- jboss.server.config.file.name>standalone-full.xml</jboss.server.config.file.name -->
                             </systemPropertyVariables>
                             <systemProperties>
                                 <arquillian.xml>wildfly-arquillian.xml</arquillian.xml>
@@ -236,7 +260,8 @@
             </build>
         </profile>
 
-        <!-- InContainer profile using JBoss AS 7 Remote. Runs the full integration test suite, used by e.g. Hudson. -->
+        <!-- InContainer profile using JBoss AS 7 Remote. Runs the full integration 
+            test suite, used by e.g. Hudson. -->
         <profile>
             <id>incontainer-remote</id>
             <activation>
@@ -255,10 +280,10 @@
                     <artifactId>wildfly-arquillian-container-remote</artifactId>
                     <scope>test</scope>
                     <exclusions>
-                      <exclusion>
-                        <groupId>org.jboss.logmanager</groupId>
-                        <artifactId>log4j-jboss-logmanager</artifactId>
-                      </exclusion>
+                        <exclusion>
+                            <groupId>org.jboss.logmanager</groupId>
+                            <artifactId>log4j-jboss-logmanager</artifactId>
+                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -301,11 +326,9 @@
                     <groupId>org.jboss.weld.arquillian.container</groupId>
                     <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
                     <scope>provided</scope>
-                    <!--
-                       should be test, but we need shrinkwrap-impl for compiling
-                       BeanArchive, having this in test scopes override the
-                       shrinkwrap-api scope. ??
-                    -->
+                    <!-- should be test, but we need shrinkwrap-impl for 
+                        compiling BeanArchive, having this in test scopes override the shrinkwrap-api 
+                        scope. ?? -->
                 </dependency>
             </dependencies>
             <build>
